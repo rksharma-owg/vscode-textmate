@@ -1,0 +1,29 @@
+name: Contribution preflight
+on:
+  workflow_dispatch:
+permissions: {}
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        sha: [f9df1c60b5c9b20418a954a003546851181c890f, dec096bc6ab91710e13023a00d029b8195e26c60]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.sha }}
+          persist-credentials: false
+      - name: Verify tested SHA
+        shell: bash
+        env:
+          TESTED_SHA: ${{ matrix.sha }}
+        run: test "$(git rev-parse HEAD)" = "$TESTED_SHA"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 22.x
+      - run: npm ci
+      - run: npm run compile
+      - run: npm test
+      - run: npm run bundle
